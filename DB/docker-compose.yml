@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  db:
+    image: mysql:8.0.33
+    restart: always
+    volumes:
+      - ./mysqldata:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: db
+    ports:
+      - "3306:3306"
+    command: ["--init-file", "/docker-entrypoint-initdb.d/init.sql"]
