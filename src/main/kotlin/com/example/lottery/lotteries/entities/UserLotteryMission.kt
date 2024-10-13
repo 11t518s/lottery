@@ -9,6 +9,7 @@ import javax.persistence.*
 class UserLotteryMission(
     val missionId: Long,
     val amount: Int,
+    val uid: Long,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
