@@ -31,6 +31,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-mysql:8.0.33")
 	runtimeOnly("mysql:mysql-connector-java:8.0.33")
 
+	api("com.vladmihalcea:hibernate-types-52:2.16.3")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
