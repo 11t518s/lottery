@@ -2,6 +2,7 @@ package com.example.lottery.lotteries.entities
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.Instant
+import java.time.LocalDate
 import javax.persistence.*
 
 @Entity
