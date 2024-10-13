@@ -1,9 +1,8 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.3.4"
-	id("io.spring.dependency-management") version "1.1.6"
-	kotlin("plugin.jpa") version "1.9.25"
+	kotlin("jvm") version "1.6.21"
+	kotlin("plugin.spring") version "1.6.21"
+	id("org.springframework.boot") version "2.7.18"
+	id("com.google.cloud.tools.jib") version "3.1.1"
 }
 
 group = "com.example"
@@ -11,7 +10,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion.set(JavaLanguageVersion.of(17))
 	}
 }
 
@@ -27,13 +26,17 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	runtimeOnly("org.flywaydb:flyway-core:9.16.0")
-	runtimeOnly("org.flywaydb:flyway-mysql:8.0.33")
+	implementation("org.flywaydb:flyway-core:9.16.0")
+	implementation("org.flywaydb:flyway-mysql:8.0.33")
+	runtimeOnly("mysql:mysql-connector-java:8.0.33")
+
+
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
-kotlin {
-	compilerOptions {
-		freeCompilerArgs.addAll("-Xjsr305=strict")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+	kotlinOptions {
+		freeCompilerArgs = listOf("-Xjsr305=strict")
 	}
 }
 
