@@ -8,5 +8,5 @@ class UserLotteryInfo(
     @Id
     val uid: Long = 0L
 ) {
-    var totalScore: Int = 0
+    var totalCoin: Int = 0
 }

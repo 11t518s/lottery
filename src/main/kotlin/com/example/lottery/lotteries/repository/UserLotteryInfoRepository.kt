@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.Query
 
 interface UserLotteryInfoRepository : JpaRepository<UserLotteryInfo, Long> {
     @Modifying
-    @Query("UPDATE user_lottery_info SET total_score = total_score + :scoreToAdd WHERE uid = :uid", nativeQuery = true)
-    fun incrementTotalScore(uid: Long, scoreToAdd: Int)
+    @Query("UPDATE user_lottery_info SET total_coin = total_coin + :coinToAdd WHERE uid = :uid", nativeQuery = true)
+    fun incrementTotalCoin(uid: Long, coinToAdd: Int)
 }
