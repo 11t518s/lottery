@@ -3,6 +3,7 @@ package com.example.lottery.lotteries.util
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.random.Random
 
 fun getCurrentLottoRound(): Int {
     // 로또 1회차 추첨일
@@ -29,4 +30,25 @@ fun getCurrentLottoRound(): Int {
 fun getCurrentKoreanDate(): LocalDate {
     val zoneId = ZoneId.of("Asia/Seoul")
     return LocalDate.now(zoneId)
+}
+
+
+data class LottoNumbersResult(val numbers: List<Int>, val bonus: Int)
+
+fun generateLottoNumbers(): LottoNumbersResult {
+    // 1부터 45까지의 숫자 리스트
+    val numbers = (1..45).toMutableList()
+
+    // 6개의 로또 번호 뽑기
+    val lottoNumbers = mutableListOf<Int>()
+    repeat(6) {
+        val randomIndex = Random.nextInt(numbers.size)
+        lottoNumbers.add(numbers.removeAt(randomIndex))
+    }
+
+    // 보너스 번호 뽑기
+    val bonus = numbers.random()
+
+    // LottoNumbersResult data class로 반환
+    return LottoNumbersResult(lottoNumbers.sorted(), bonus)
 }

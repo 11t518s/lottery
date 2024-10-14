@@ -1,14 +1,19 @@
 package com.example.lottery.lotteries.service
 
+import com.example.lottery.lotteries.dtos.PostUserTicketDrawsResponse
 import kotlin.random.Random
 
 import com.example.lottery.lotteries.entities.LotteryMission
+import com.example.lottery.lotteries.entities.UserLotteryDrawTicket
 import com.example.lottery.lotteries.entities.UserLotteryInfo
 import com.example.lottery.lotteries.entities.UserLotteryMission
 import com.example.lottery.lotteries.repository.LotteryMissionRepository
+import com.example.lottery.lotteries.repository.UserLotteryDrawTicketRepository
 import com.example.lottery.lotteries.repository.UserLotteryInfoRepository
 import com.example.lottery.lotteries.repository.UserLotteryMissionRepository
+import com.example.lottery.lotteries.util.generateLottoNumbers
 import com.example.lottery.lotteries.util.getCurrentKoreanDate
+import com.example.lottery.lotteries.util.getCurrentLottoRound
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +23,8 @@ import java.util.*
 class LotteriesService(
     private val userLotteryInfoRepository: UserLotteryInfoRepository,
     private val lotteriesMissionRepository: LotteryMissionRepository,
-    private val userLotteryMissionRepository: UserLotteryMissionRepository
+    private val userLotteryMissionRepository: UserLotteryMissionRepository,
+    private val userLotteryDrawTicketRepository: UserLotteryDrawTicketRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -66,10 +72,46 @@ class LotteriesService(
                 uid = uid
             )
         )
-        userLotteryInfoRepository.incrementTotalScore(
+        userLotteryInfoRepository.incrementTotalCoin(
             uid = uid,
-            scoreToAdd = missionRewardCoinAmount
+            coinToAdd = missionRewardCoinAmount
         )
         return userMission
+    }
+
+    @Transactional
+    fun saveUserLotteryDrawTicket(uid: Long): PostUserTicketDrawsResponse {
+        val userLotteryInfo = userLotteryInfoRepository.findByIdOrNull(uid) ?:  throw NoSuchElementException("Mission with ID $uid not found")
+
+        if (userLotteryInfo.totalCoin < TICKET_DRAW_COIN) {
+            throw IllegalStateException("not enough coins")
+        }
+
+        val randomLotteryNumbers = generateLottoNumbers()
+        val currentRound = getCurrentLottoRound()
+
+        userLotteryInfoRepository.decrementTotalCoin(
+            uid = uid,
+            coinToSubtract = TICKET_DRAW_COIN
+        )
+        userLotteryDrawTicketRepository.save(
+            UserLotteryDrawTicket(
+                round = currentRound,
+                numbers = randomLotteryNumbers.numbers,
+                bonus = randomLotteryNumbers.bonus,
+                uid = uid
+            )
+        )
+
+        return PostUserTicketDrawsResponse(
+            numbers = randomLotteryNumbers.numbers,
+            bonus = randomLotteryNumbers.bonus,
+            round = currentRound,
+        )
+    }
+
+    companion object {
+        const val TICKET_DRAW_COIN = 1000
+
     }
 }

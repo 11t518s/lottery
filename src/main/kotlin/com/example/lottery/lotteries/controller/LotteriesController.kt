@@ -1,9 +1,6 @@
 package com.example.lottery.lotteries.controller
 
-import com.example.lottery.lotteries.dtos.GetLotteriesMissionsResponse
-import com.example.lottery.lotteries.dtos.GetLotteriesUseMeResponse
-import com.example.lottery.lotteries.dtos.LotteriesMission
-import com.example.lottery.lotteries.dtos.PostMissionCompleteResponse
+import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.service.LotteriesService
 import com.example.lottery.redis.RedisLockService
 import org.springframework.http.HttpStatus
@@ -58,7 +55,7 @@ class LotteriesController(
         @PathVariable missionId: Long,
         @RequestHeader("uid") uid: Long
     ): ResponseEntity<PostMissionCompleteResponse> {
-        val lockKey = "lottery-mission-lock:$uid"
+        val lockKey = "/missions/${missionId}/complete:${uid}"
         val lockAcquired = redisLockService.tryLock(lockKey, 10) // 10초 동안 락을 유지
         return if (lockAcquired) {
             try {
@@ -75,6 +72,30 @@ class LotteriesController(
             ResponseEntity(PostMissionCompleteResponse(
                 isSuccess = false,
                 rewardAmount = 0
+            ), HttpStatus.CONFLICT)
+        }
+    }
+
+
+    @PostMapping("/current/users/me/draws")
+    fun createLotteryDrawTicket(
+        @RequestHeader("uid") uid: Long
+    ): ResponseEntity<PostUserTicketDrawsResponse> {
+        val lockKey = "/current/users/me/draws:${uid}"
+        val lockAcquired = redisLockService.tryLock(lockKey, 10) // 10초 동안 락을 유지
+        return if (lockAcquired) {
+            try {
+                val result = lotteriesService.saveUserLotteryDrawTicket(uid)
+
+                ResponseEntity(result, HttpStatus.OK)
+            } finally {
+                redisLockService.releaseLock(lockKey) // 락 해제
+            }
+        } else {
+            ResponseEntity(PostUserTicketDrawsResponse(
+                numbers = emptyList(),
+                bonus = 0,
+                round = 0,
             ), HttpStatus.CONFLICT)
         }
     }
