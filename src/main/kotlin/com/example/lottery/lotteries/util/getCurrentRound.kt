@@ -27,16 +27,6 @@ fun getCurrentLottoRound(): Int {
 
 
 fun getCurrentKoreanDate(): LocalDate {
-    // 한국 표준시 (KST) 시간대
     val zoneId = ZoneId.of("Asia/Seoul")
-
-    // Instant.now()로 현재 UTC 시간을 가져오고, 한국 시간으로 변환
-    val koreanTime = ZonedDateTime.ofInstant(Instant.now(), zoneId)
-
-    return koreanTime.toLocalDate()
-//    // yyyy-MM-dd 형식으로 날짜 포맷터 생성
-//    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-//
-//    // 포맷된 문자열 반환
-//    return koreanTime.format(formatter)
+    return LocalDate.now(zoneId)
 }

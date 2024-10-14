@@ -1,8 +1,8 @@
 package com.example.lottery.lotteries.entities
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import javax.persistence.*
 
 @Entity
@@ -16,6 +16,5 @@ class UserLotteryMission(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")  // JSON 직렬화 시 포맷 지정
-    val createdAt: Instant = Instant.now()
+    val createdAt: LocalDate = LocalDate.now(ZoneId.of("Asia/Seoul"))  // 한국 표준시에 맞춰 생성
 }
