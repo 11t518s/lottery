@@ -10,14 +10,17 @@ import javax.persistence.*
 @Table(name = "user_lottery_draw_ticket")
 @TypeDef(name = "json", typeClass = JsonStringType::class)
 class UserLotteryDrawTicket(
-    @Type(type = "json")
-    @Column(columnDefinition = "text", name = "numbers")
-    val numbers: List<Int>,
-    val bonusNumber: Int,
+    numbers: List<Int>,
+    val bonus: Int,
     val round: Int,
     val uid: Long,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
+
+    // numbers 필드를 오름차순으로 정렬하여 저장
+    @Type(type = "json")
+    @Column(columnDefinition = "text", name = "numbers")
+    val numbers: List<Int> = numbers.sorted()  // 정렬 후 저장
 }
