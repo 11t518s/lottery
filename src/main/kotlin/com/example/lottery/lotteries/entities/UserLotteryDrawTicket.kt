@@ -1,8 +1,10 @@
 package com.example.lottery.lotteries.entities
 
 import com.vladmihalcea.hibernate.type.json.JsonStringType
+import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Type
 import org.hibernate.annotations.TypeDef
+import java.time.Instant
 import javax.persistence.*
 
 
@@ -23,4 +25,7 @@ class UserLotteryDrawTicket(
     @Type(type = "json")
     @Column(columnDefinition = "text", name = "numbers")
     val numbers: List<Int> = numbers.sorted()  // 정렬 후 저장
+
+    @CreationTimestamp
+    var createdAt: Instant = Instant.now()
 }

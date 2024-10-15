@@ -17,7 +17,7 @@ class LotteryRound(
     @Type(type = "json")
     @Column(columnDefinition = "text", name = "numbers")
     val numbers: List<Int> = listOf(),
-    val bonus: Int? = null,
+    val bonus: Int,
 ) {
     @Id
     val id: Int = round

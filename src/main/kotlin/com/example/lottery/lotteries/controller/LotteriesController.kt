@@ -2,11 +2,13 @@ package com.example.lottery.lotteries.controller
 
 import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.service.LotteriesService
+import com.example.lottery.lotteries.util.getCurrentLottoRound
 import com.example.lottery.redis.RedisLockService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono.delay
+import java.time.Instant
 
 @RestController
 @RequestMapping("/v2/lotteries")
@@ -98,5 +100,51 @@ class LotteriesController(
                 round = 0,
             ), HttpStatus.CONFLICT)
         }
+    }
+
+
+    @GetMapping("/current/users/me/draws")
+    fun getMyLottery(
+        @RequestHeader("uid") uid: Long
+    ): ResponseEntity<LotteryResultResponse> {
+        val currentRound = getCurrentLottoRound()
+
+        val currentMyLotteries = lotteriesService.getMyLotteriesByRound(
+            uid = uid,
+            round = currentRound
+        )
+
+        val currentLotteryResult = lotteriesService.getLotteryResultByRound(
+            uid = uid,
+            round = currentRound,
+        )
+
+        val currentLotteryRound = lotteriesService.getLotteryRoundByRound(
+            round = currentRound
+        )
+
+        return ResponseEntity(LotteryResultResponse(
+            lotteryRound = LotteryRound(
+                round = currentRound,
+                winAnnounceAtMillis = Instant.now().toEpochMilli(),
+                numbers = Numbers(currentLotteryRound.numbers),
+                bonus = currentLotteryRound.bonus
+            ),
+            userDraws = currentMyLotteries.map { it ->
+                val isLotterySuccess = it.id == currentLotteryResult.drawTicketId
+
+                UserDraw(
+                    id = it.id,
+                    uid = it.uid,
+                    numbers = Numbers(it.numbers),
+                    canReward = if (isLotterySuccess) currentLotteryResult.isReceiveReward else false,
+                    drawnAtMillis = it.createdAt.toEpochMilli(),
+                    isWin = isLotterySuccess,
+                    winPlace = if (isLotterySuccess) currentLotteryResult.ranking else null
+                )
+           },
+            prevRound = currentRound - 1,
+            nextRound = currentRound + 1,
+        ), HttpStatus.OK)
     }
 }

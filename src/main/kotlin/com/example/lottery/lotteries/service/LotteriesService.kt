@@ -1,16 +1,10 @@
 package com.example.lottery.lotteries.service
 
 import com.example.lottery.lotteries.dtos.PostUserTicketDrawsResponse
+import com.example.lottery.lotteries.entities.*
 import kotlin.random.Random
 
-import com.example.lottery.lotteries.entities.LotteryMission
-import com.example.lottery.lotteries.entities.UserLotteryDrawTicket
-import com.example.lottery.lotteries.entities.UserLotteryInfo
-import com.example.lottery.lotteries.entities.UserLotteryMission
-import com.example.lottery.lotteries.repository.LotteryMissionRepository
-import com.example.lottery.lotteries.repository.UserLotteryDrawTicketRepository
-import com.example.lottery.lotteries.repository.UserLotteryInfoRepository
-import com.example.lottery.lotteries.repository.UserLotteryMissionRepository
+import com.example.lottery.lotteries.repository.*
 import com.example.lottery.lotteries.util.generateLottoNumbers
 import com.example.lottery.lotteries.util.getCurrentKoreanDate
 import com.example.lottery.lotteries.util.getCurrentLottoRound
@@ -24,7 +18,9 @@ class LotteriesService(
     private val userLotteryInfoRepository: UserLotteryInfoRepository,
     private val lotteriesMissionRepository: LotteryMissionRepository,
     private val userLotteryMissionRepository: UserLotteryMissionRepository,
-    private val userLotteryDrawTicketRepository: UserLotteryDrawTicketRepository
+    private val userLotteryDrawTicketRepository: UserLotteryDrawTicketRepository,
+    private val lotteryRoundRepository: LotteryRoundRepository,
+    private val lotteryResultRepository: LotteryResultRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -110,8 +106,32 @@ class LotteriesService(
         )
     }
 
+    @Transactional(readOnly = true)
+    fun getMyLotteriesByRound(uid: Long, round: Int): List<UserLotteryDrawTicket> {
+        val userLotteryInfo = userLotteryDrawTicketRepository.findAllByUidAndRound(
+            uid = uid,
+            round = round
+        )
+
+        return userLotteryInfo
+    }
+
+    @Transactional(readOnly = true)
+    fun getLotteryResultByRound(uid: Long, round: Int): LotteryResult {
+        val currentLotteryResult = lotteryResultRepository.findByRoundAndUid(round = round, uid = uid)
+
+        return currentLotteryResult
+    }
+
+
+    @Transactional(readOnly = true)
+    fun getLotteryRoundByRound(round: Int): LotteryRound {
+        val currentLottery = lotteryRoundRepository.findByRound(round = round)
+
+        return currentLottery
+    }
+
     companion object {
         const val TICKET_DRAW_COIN = 1000
-
     }
 }

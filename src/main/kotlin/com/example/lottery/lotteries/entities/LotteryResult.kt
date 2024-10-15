@@ -5,6 +5,7 @@ import javax.persistence.*
 @Entity
 @Table(name = "lottery_result")
 class LotteryResult(
+    val drawTicketId: Long,
     val round: Int,
     val ranking: Int,
     val uid: Long,
@@ -12,4 +13,6 @@ class LotteryResult(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
+
+    val isReceiveReward: Boolean = false
 }
