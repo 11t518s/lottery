@@ -131,16 +131,16 @@ class LotteriesController(
                 bonus = currentLotteryRound.bonus
             ),
             userDraws = currentMyLotteries.map { it ->
-                val isLotterySuccess = it.id == currentLotteryResult.drawTicketId
+                val isLotterySuccess = it.id == currentLotteryResult?.drawTicketId
 
                 UserDraw(
                     id = it.id,
                     uid = it.uid,
                     numbers = Numbers(it.numbers),
-                    canReward = if (isLotterySuccess) currentLotteryResult.isReceiveReward else false,
+                    canReward = if (isLotterySuccess) currentLotteryResult?.isReceiveReward else false,
                     drawnAtMillis = it.createdAt.toEpochMilli(),
                     isWin = isLotterySuccess,
-                    winPlace = if (isLotterySuccess) currentLotteryResult.ranking else null
+                    winPlace = if (isLotterySuccess) currentLotteryResult?.ranking else null
                 )
            },
             prevRound = currentRound - 1,

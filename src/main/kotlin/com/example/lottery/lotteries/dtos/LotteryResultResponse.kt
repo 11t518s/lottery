@@ -22,8 +22,8 @@ data class UserDraw(
     val id: Long,
     val uid: Long,
     val numbers: Numbers,
-    val canReward: Boolean,
+    val canReward: Boolean?,
     val drawnAtMillis: Long,
-    val isWin: Boolean,
+    val isWin: Boolean?,
     val winPlace: Int?
 )

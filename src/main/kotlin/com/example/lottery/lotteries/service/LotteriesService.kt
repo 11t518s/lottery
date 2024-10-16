@@ -113,13 +113,13 @@ class LotteriesService(
         val userLotteryInfo = userLotteryDrawTicketRepository.findAllByUidAndRound(
             uid = uid,
             round = round
-        )
+        ) ?: emptyList()
 
         return userLotteryInfo
     }
 
     @Transactional(readOnly = true)
-    fun getLotteryResultByRound(uid: Long, round: Int): LotteryResult {
+    fun getLotteryResultByRound(uid: Long, round: Int): LotteryResult? {
         val currentLotteryResult = lotteryResultRepository.findByRoundAndUid(round = round, uid = uid)
 
         return currentLotteryResult
@@ -128,7 +128,11 @@ class LotteriesService(
 
     @Transactional(readOnly = true)
     fun getLotteryRoundByRound(round: Int): LotteryRound {
-        val currentLottery = lotteryRoundRepository.findByRound(round = round)
+        val currentLottery = lotteryRoundRepository.findByRound(round = round) ?: LotteryRound(
+            round = round,
+            numbers = emptyList(),
+            bonus = 0,
+        )
 
         return currentLottery
     }
