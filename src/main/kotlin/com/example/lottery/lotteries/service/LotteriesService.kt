@@ -23,14 +23,16 @@ class LotteriesService(
     private val lotteryResultRepository: LotteryResultRepository
 ) {
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun getUserLotteryInfo(uid: Long): UserLotteryInfo {
         val userLotteryInfo = userLotteryInfoRepository.findByIdOrNull(id = uid)
 
         if (userLotteryInfo != null) {
             return userLotteryInfo
         } else {
-            val newUser = userLotteryInfoRepository.save(UserLotteryInfo(uid = uid))
+            val newUser = userLotteryInfoRepository.save(
+                UserLotteryInfo(uid = uid)
+            )
             return newUser
         }
     }
@@ -77,7 +79,7 @@ class LotteriesService(
 
     @Transactional
     fun saveUserLotteryDrawTicket(uid: Long): PostUserTicketDrawsResponse {
-        val userLotteryInfo = userLotteryInfoRepository.findByIdOrNull(uid) ?:  throw NoSuchElementException("Mission with ID $uid not found")
+        val userLotteryInfo = this.getUserLotteryInfo(uid)
 
         if (userLotteryInfo.totalCoin < TICKET_DRAW_COIN) {
             throw IllegalStateException("not enough coins")
