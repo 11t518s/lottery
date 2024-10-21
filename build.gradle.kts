@@ -29,6 +29,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.flywaydb:flyway-core:9.16.0")
 	implementation("org.flywaydb:flyway-mysql:8.0.33")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
 	runtimeOnly("mysql:mysql-connector-java:8.0.33")
 
 	api("com.vladmihalcea:hibernate-types-52:2.16.3")
