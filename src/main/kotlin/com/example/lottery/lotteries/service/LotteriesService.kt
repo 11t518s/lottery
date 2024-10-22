@@ -42,6 +42,31 @@ class LotteriesService(
     }
 
     @Transactional(readOnly = true)
+    fun getUserLotteryMissions(uid: Long?): List<LotteriesMission> {
+        val lotteriesMissions = getLotteriesMissions()
+        val userLotteriesClearMissions = getUserClearedMissions(uid = uid)
+
+        val userLotteriesMissions = lotteriesMissions.map { mission ->
+            val clearedCount = userLotteriesClearMissions.count { it.missionId == mission.id }
+            val remainCount = (mission.dailyRepeatableCount - clearedCount).coerceAtLeast(0)
+            val isEnabled = mission.enabled && remainCount > 0
+
+            LotteriesMission(
+                id = mission.id,
+                name = mission.name,
+                maxCoinAmount = mission.maxCoinAmount,
+                dailyRepeatableCount = mission.dailyRepeatableCount,
+                type = mission.type,
+                enabled = isEnabled,
+                createdAt = mission.createdAt,
+                remainCount = remainCount
+            )
+        }
+
+        return userLotteriesMissions
+    }
+
+    @Transactional(readOnly = true)
     fun getLotteriesMissions(): List<LotteryMission> {
         return lotteriesMissionRepository.findAllByEnabledTrue()
     }
@@ -56,7 +81,7 @@ class LotteriesService(
     }
 
     @Transactional
-    fun saveUserMission(missionId: Long, uid: Long): UserLotteryMission {
+    fun rewardUserForMission(missionId: Long, uid: Long): UserLotteryMission {
         val targetMission = lotteriesMissionRepository.findByIdOrNull(missionId) ?: throw NoSuchElementException("Mission with ID $missionId not found")
         val userLotteryMissions = userLotteryMissionRepository.findAllByUidAndCreatedAt(uid = uid, createdAt = getCurrentKoreanDate()) ?: emptyList()
 
