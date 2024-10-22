@@ -56,7 +56,7 @@ class LotteriesController(
         @RequestHeader("uid") uid: Long
     ): ResponseEntity<PostMissionCompleteResponse> {
         val lockKey = "/missions/${missionId}/complete:${uid}"
-        val lockAcquired = redisLockService.tryLock(lockKey, 10) // 10초 동안 락을 유지
+        val lockAcquired = redisLockService.tryLock(lockKey, 10)
         return if (lockAcquired) {
             try {
                 val result = lotteriesService.saveUserMission(missionId = missionId, uid = uid)
@@ -66,7 +66,7 @@ class LotteriesController(
                     rewardAmount = result.amount
                 ), HttpStatus.OK)
             } finally {
-                redisLockService.releaseLock(lockKey) // 락 해제
+                redisLockService.releaseLock(lockKey)
             }
         } else {
             ResponseEntity(PostMissionCompleteResponse(
@@ -82,14 +82,14 @@ class LotteriesController(
         @RequestHeader("uid") uid: Long
     ): ResponseEntity<PostUserTicketDrawsResponse> {
         val lockKey = "/current/users/me/draws:${uid}"
-        val lockAcquired = redisLockService.tryLock(lockKey, 10) // 10초 동안 락을 유지
+        val lockAcquired = redisLockService.tryLock(lockKey, 10)
         return if (lockAcquired) {
             try {
                 val result = lotteriesService.saveUserLotteryDrawTicket(uid)
 
                 ResponseEntity(result, HttpStatus.OK)
             } finally {
-                redisLockService.releaseLock(lockKey) // 락 해제
+                redisLockService.releaseLock(lockKey)
             }
         } else {
             ResponseEntity(PostUserTicketDrawsResponse(
@@ -141,7 +141,7 @@ class LotteriesController(
         @RequestHeader("uid") uid: Long
     ): ResponseEntity<Void> {
         val lockKey = "/${lotteryRound}/users/me/draws/${drawId}/reward:${uid}"
-        val lockAcquired = redisLockService.tryLock(lockKey, 10) // 10초 동안 락을 유지
+        val lockAcquired = redisLockService.tryLock(lockKey, 10)
 
         return if (lockAcquired) {
             lotteriesService.confirmLotteryResult(

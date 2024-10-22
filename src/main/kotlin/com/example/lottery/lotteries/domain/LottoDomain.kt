@@ -5,11 +5,8 @@ import java.time.temporal.ChronoUnit
 import kotlin.random.Random
 
 object LottoDomain {
-
-    // 로또 번호 결과 데이터 클래스
     data class LottoNumbersResult(val numbers: List<Int>)
 
-    // 로또 순위 결과 데이터 클래스
     data class RankingResult private constructor(
         val isWin: Boolean,
         val place: Int,
@@ -41,7 +38,6 @@ object LottoDomain {
         LOTTERY_COIN,
     }
 
-    // 로또 번호 생성 로직
     fun generateLottoNumbers(): LottoNumbersResult {
         val numbers = (1..45).toMutableList()
         val lottoNumbers = mutableListOf<Int>()
@@ -52,7 +48,6 @@ object LottoDomain {
         return LottoNumbersResult(lottoNumbers.sorted())
     }
 
-    // 로또 회차 계산 로직
     fun getCurrentLottoRound(): Int {
         val firstLottoDate = LocalDate.of(2002, 12, 7)
         val zoneId = ZoneId.of("Asia/Seoul")
@@ -63,9 +58,7 @@ object LottoDomain {
         return (weeksBetween + 1).toInt()
     }
 
-    // 로또 순위 계산 로직
     fun calculateRanking(userNumbers: List<Int>, winningNumbers: List<Int>, bonusNumber: Int?): RankingResult {
-        // 중복 제거를 위해 Set으로 변환하여 계산
         val matchCount = userNumbers.toSet().count { it in winningNumbers.toSet() }
         val place = when (matchCount) {
             6 -> 1

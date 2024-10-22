@@ -19,8 +19,7 @@ class LotteryRound(
     @Id
     val id: Int = round
 
-    // numbers 필드를 오름차순으로 정렬하여 저장
     @Type(type = "json")
     @Column(columnDefinition = "text", name = "numbers")
-    val numbers: List<Int> = numbers.sorted()  // 정렬 후 저장
+    val numbers: List<Int> = numbers.sorted()
 }

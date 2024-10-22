@@ -11,7 +11,6 @@ import org.springframework.scheduling.annotation.Scheduled
 class LotteryBatchScheduler(
     private val lotteryJobLauncher: LotteryJobLauncher
 ) {
-    // cron 표현식을 필드로 주입받음
     @Value("\${batch-cron.lotteryJob.cron}")
     private lateinit var cronExpression: String
 

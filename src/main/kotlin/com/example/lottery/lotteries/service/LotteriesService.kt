@@ -124,17 +124,16 @@ class LotteriesService(
                 bonus = currentLotteryRound?.bonus ?: 0
             ),
             userDraws = currentMyLotteries.map { ticket ->
-                // 티켓에 결과 정보가 이미 포함되어 있으므로 별도로 로또 결과를 가져올 필요가 없음
                 val isLotterySuccess = ticket.ranking != null
 
                 UserDrawDto(
                     id = ticket.id,
                     uid = ticket.uid,
                     numbers = NumbersDto(ticket.numbers),
-                    canReward = ticket.isReceiveReward,  // 보상 수령 가능 여부
+                    canReward = ticket.isReceiveReward,
                     drawnAtMillis = ticket.createdAt.toEpochMilli(),
-                    isWin = isLotterySuccess,  // 당첨 여부
-                    winPlace = ticket.ranking  // 당첨 순위
+                    isWin = isLotterySuccess,
+                    winPlace = ticket.ranking
                 )
             },
             prevRound = prevRound,
@@ -242,13 +241,13 @@ class LotteriesService(
         val prevRound = if (lotteryRoundRepository.existsByRound(round - 1)) {
             round - 1
         } else {
-            null  // 이전 라운드가 없으면 null 반환
+            null
         }
 
         val nextRound = if (lotteryRoundRepository.existsByRound(round + 1)) {
             round + 1
         } else {
-            null  // 다음 라운드가 없으면 null 반환
+            null
         }
 
         return Pair(prevRound, nextRound)

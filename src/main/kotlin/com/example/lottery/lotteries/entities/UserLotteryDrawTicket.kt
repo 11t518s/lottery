@@ -21,15 +21,13 @@ class UserLotteryDrawTicket(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
 
-    // numbers 필드를 오름차순으로 정렬하여 저장
     @Type(type = "json")
     @Column(columnDefinition = "text", name = "numbers")
-    val numbers: List<Int> = numbers.sorted()  // 정렬 후 저장
+    val numbers: List<Int> = numbers.sorted()
 
     @CreationTimestamp
     var createdAt: Instant = Instant.now()
 
-    // 결과 정보
-    var ranking: Int? = null  // 결과가 없을 때는 null
-    var isReceiveReward: Boolean = false  // 보상 수령 여부
+    var ranking: Int? = null
+    var isReceiveReward: Boolean = false
 }

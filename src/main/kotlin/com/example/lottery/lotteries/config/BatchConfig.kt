@@ -42,15 +42,13 @@ class BatchConfig(
     fun lotteryTasklet(): Tasklet {
         return Tasklet { contribution, chunkContext ->
             val currentRound = getCurrentLottoRound()
-            // 1. Repository에서 1141번 회차 데이터가 이미 있는지 확인
             val existingLottoRound = lotteryRoundRepository.findById(currentRound)
 
             if (existingLottoRound.isPresent) {
                 println("Lotto round ${currentRound} already exists, stopping batch.")
-                return@Tasklet RepeatStatus.FINISHED  // 이미 데이터가 있으므로 배치 종료
+                return@Tasklet RepeatStatus.FINISHED
             }
 
-            // 2. 데이터가 없을 경우, API 호출
             val response = lotteriesAPIClient.getLottoNumber(currentRound).execute()
 
             if (response.isSuccessful) {
@@ -69,7 +67,6 @@ class BatchConfig(
                             )
                         }
 
-                        // 3. 새 데이터를 저장
                         lottoResult.let {
                             lotteryRoundRepository.save(it)
                             println("Lotto round 1141 saved successfully.")
