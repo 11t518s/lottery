@@ -13,9 +13,9 @@ import javax.persistence.*
 @TypeDef(name = "json", typeClass = JsonStringType::class)
 class UserLotteryDrawTicket(
     numbers: List<Int>,
-    val bonus: Int,
     val round: Int,
     val uid: Long,
+
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,4 +28,8 @@ class UserLotteryDrawTicket(
 
     @CreationTimestamp
     var createdAt: Instant = Instant.now()
+
+    // 결과 정보
+    var ranking: Int? = null  // 결과가 없을 때는 null
+    var isReceiveReward: Boolean = false  // 보상 수령 여부
 }

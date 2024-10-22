@@ -1,14 +1,12 @@
 package com.example.lottery.lotteries.controller
 
+import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
 import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.service.LotteriesService
-import com.example.lottery.lotteries.util.getCurrentLottoRound
 import com.example.lottery.redis.RedisLockService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import reactor.core.publisher.Mono.delay
-import java.time.Instant
 
 @RestController
 @RequestMapping("/v2/lotteries")
@@ -96,7 +94,6 @@ class LotteriesController(
         } else {
             ResponseEntity(PostUserTicketDrawsResponse(
                 numbers = emptyList(),
-                bonus = 0,
                 round = 0,
             ), HttpStatus.CONFLICT)
         }
@@ -104,47 +101,57 @@ class LotteriesController(
 
 
     @GetMapping("/current/users/me/draws")
-    fun getMyLottery(
+    fun getMyCurrentLotteryResult(
         @RequestHeader("uid") uid: Long
-    ): ResponseEntity<LotteryResultResponse> {
+    ): ResponseEntity<LotteryResultResponseDto> {
         val currentRound = getCurrentLottoRound()
 
-        val currentMyLotteries = lotteriesService.getMyLotteriesByRound(
-            uid = uid,
-            round = currentRound
-        )
+        val response = lotteriesService.getCurrentLotteryResultResponse(uid, currentRound)
 
-        val currentLotteryResult = lotteriesService.getLotteryResultByRound(
-            uid = uid,
-            round = currentRound,
-        )
+        return ResponseEntity(response, HttpStatus.OK)
+    }
 
-        val currentLotteryRound = lotteriesService.getLotteryRoundByRound(
-            round = currentRound
-        )
 
-        return ResponseEntity(LotteryResultResponse(
-            lotteryRound = LotteryRound(
-                round = currentRound,
-                winAnnounceAtMillis = Instant.now().toEpochMilli(),
-                numbers = Numbers(currentLotteryRound.numbers),
-                bonus = currentLotteryRound.bonus
-            ),
-            userDraws = currentMyLotteries.map { it ->
-                val isLotterySuccess = it.id == currentLotteryResult?.drawTicketId
+    @GetMapping("/{lotteryRound}/users/me/draws")
+    fun getMyLotteryRoundResult(
+        @PathVariable lotteryRound: Int,
+        @RequestHeader("uid") uid: Long
+    ): ResponseEntity<LotteryResultResponseDto> {
 
-                UserDraw(
-                    id = it.id,
-                    uid = it.uid,
-                    numbers = Numbers(it.numbers),
-                    canReward = if (isLotterySuccess) currentLotteryResult?.isReceiveReward else false,
-                    drawnAtMillis = it.createdAt.toEpochMilli(),
-                    isWin = isLotterySuccess,
-                    winPlace = if (isLotterySuccess) currentLotteryResult?.ranking else null
-                )
-           },
-            prevRound = currentRound - 1,
-            nextRound = currentRound + 1,
-        ), HttpStatus.OK)
+        val response = lotteriesService.getCurrentLotteryResultResponse(uid, lotteryRound)
+
+        return ResponseEntity(response, HttpStatus.OK)
+    }
+
+    @PostMapping("/{lotteryRound}/users/me/draws/confirm")
+    fun confirmUserDraw(
+        @PathVariable lotteryRound: Int,
+        @RequestHeader("uid") uid: Long
+    ): ResponseEntity<Void> {
+        lotteriesService.saveLotteryResult(round = lotteryRound, uid = uid)
+
+        return ResponseEntity(HttpStatus.OK)
+    }
+
+
+    @PostMapping("/{lotteryRound}/users/me/draws/{drawId}/reward")
+    fun receiveReward(
+        @PathVariable lotteryRound: Int,
+        @PathVariable drawId: Long,
+        @RequestHeader("uid") uid: Long
+    ): ResponseEntity<Void> {
+        val lockKey = "/${lotteryRound}/users/me/draws/${drawId}/reward:${uid}"
+        val lockAcquired = redisLockService.tryLock(lockKey, 10) // 10초 동안 락을 유지
+
+        return if (lockAcquired) {
+            lotteriesService.confirmLotteryResult(
+                round = lotteryRound,
+                drawId = drawId,
+                uid = uid
+            )
+            return ResponseEntity(HttpStatus.OK)
+        } else {
+            ResponseEntity(HttpStatus.CONFLICT)
+        }
     }
 }

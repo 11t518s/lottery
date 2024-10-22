@@ -1,17 +1,20 @@
 package com.example.lottery.lotteries.service
 
-import com.example.lottery.lotteries.dtos.PostUserTicketDrawsResponse
+import com.example.lottery.lotteries.domain.LottoDomain
+import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.entities.*
 import kotlin.random.Random
 
 import com.example.lottery.lotteries.repository.*
-import com.example.lottery.lotteries.util.generateLottoNumbers
-import com.example.lottery.lotteries.util.getCurrentKoreanDate
-import com.example.lottery.lotteries.util.getCurrentLottoRound
+import com.example.lottery.lotteries.domain.LottoDomain.generateLottoNumbers
+import com.example.lottery.lotteries.domain.LottoDomain.getCurrentKoreanDate
+import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
+import com.example.lottery.user.repository.UserPointRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
+import java.time.Instant
+import kotlin.NoSuchElementException
 
 @Service
 class LotteriesService(
@@ -20,7 +23,8 @@ class LotteriesService(
     private val userLotteryMissionRepository: UserLotteryMissionRepository,
     private val userLotteryDrawTicketRepository: UserLotteryDrawTicketRepository,
     private val lotteryRoundRepository: LotteryRoundRepository,
-    private val lotteryResultRepository: LotteryResultRepository
+
+    private val userPointRepository: UserPointRepository,
 ) {
 
     @Transactional
@@ -44,8 +48,8 @@ class LotteriesService(
 
     @Transactional(readOnly = true)
     fun getUserClearedMissions(uid: Long?): List<UserLotteryMission> {
-        return if(uid != null) {
-            userLotteryMissionRepository.findAllByUidAndCreatedAt(uid = uid, createdAt = getCurrentKoreanDate()) ?: emptyList()
+        return if (uid != null) {
+            userLotteryMissionRepository.findAllByUidAndCreatedAt(uid, getCurrentKoreanDate()) ?: emptyList()
         } else {
             emptyList()
         }
@@ -96,20 +100,135 @@ class LotteriesService(
             UserLotteryDrawTicket(
                 round = currentRound,
                 numbers = randomLotteryNumbers.numbers,
-                bonus = randomLotteryNumbers.bonus,
                 uid = uid
             )
         )
 
         return PostUserTicketDrawsResponse(
             numbers = randomLotteryNumbers.numbers,
-            bonus = randomLotteryNumbers.bonus,
             round = currentRound,
         )
     }
 
     @Transactional(readOnly = true)
-    fun getMyLotteriesByRound(uid: Long, round: Int): List<UserLotteryDrawTicket> {
+    fun getCurrentLotteryResultResponse(uid: Long, round: Int): LotteryResultResponseDto {
+        val currentMyLotteries = getMyLotteriesByRound(uid = uid, round = round)
+        val currentLotteryRound = getLotteryRoundByRound(round = round)
+        val (prevRound, nextRound) = getPrevAndNextRounds(round = round)
+
+        return LotteryResultResponseDto(
+            lotteryRound = LotteryRoundDto(
+                round = round,
+                winAnnounceAtMillis = Instant.now().toEpochMilli(),
+                numbers = currentLotteryRound?.let { NumbersDto(it.numbers) } ?: NumbersDto(emptyList()),
+                bonus = currentLotteryRound?.bonus ?: 0
+            ),
+            userDraws = currentMyLotteries.map { ticket ->
+                // 티켓에 결과 정보가 이미 포함되어 있으므로 별도로 로또 결과를 가져올 필요가 없음
+                val isLotterySuccess = ticket.ranking != null
+
+                UserDrawDto(
+                    id = ticket.id,
+                    uid = ticket.uid,
+                    numbers = NumbersDto(ticket.numbers),
+                    canReward = ticket.isReceiveReward,  // 보상 수령 가능 여부
+                    drawnAtMillis = ticket.createdAt.toEpochMilli(),
+                    isWin = isLotterySuccess,  // 당첨 여부
+                    winPlace = ticket.ranking  // 당첨 순위
+                )
+            },
+            prevRound = prevRound,
+            nextRound = nextRound,
+        )
+    }
+
+
+    @Transactional
+    fun saveLotteryResult(round: Int, uid: Long) {
+        // 1. 해당 회차의 로또 결과 가져오기
+        val lotteryRound = getLotteryRoundByRound(round)
+            ?: throw NoSuchElementException("해당 회차의 로또 정보를 찾을 수 없습니다.")
+
+        // 2. 사용자의 로또 티켓 가져오기 (이미 처리된 티켓도 포함)
+        val userTickets = getMyLotteriesByRound(uid, round)
+
+        // 3. 처리되지 않은 티켓만 필터링 (ranking이 null인 티켓)
+        val newResults = userTickets.filter { it.ranking == null }
+            .mapNotNull { ticket ->
+                // 순위 계산
+                val rankingResult = LottoDomain.calculateRanking(
+                    userNumbers = ticket.numbers,
+                    winningNumbers = lotteryRound.numbers,
+                    bonusNumber = lotteryRound.bonus
+                )
+
+                // 순위가 있다면 로또 티켓에 순위 정보 업데이트
+                if (rankingResult.isWin) {
+                    ticket.ranking = rankingResult.place
+                    ticket.isReceiveReward = false
+                    ticket
+                } else {
+                    null
+                }
+            }
+
+        // 4. 새로운 결과를 저장
+        if (newResults.isNotEmpty()) {
+            userLotteryDrawTicketRepository.saveAll(newResults)
+        }
+    }
+
+
+    @Transactional
+    fun confirmLotteryResult(round: Int, uid: Long, drawId: Long) {
+        // 1. 해당 유저의 로또 티켓을 가져옴
+        val ticket = userLotteryDrawTicketRepository.findByUidAndRoundAndId(
+            uid = uid,
+            round = round,
+            id = drawId
+        ) ?: throw NoSuchElementException("No lottery ticket found for drawId $drawId, round $round, and uid $uid")
+
+        // 2. 보상 수령 여부 확인
+        if (ticket.isReceiveReward) {
+            throw IllegalStateException("uid: $uid drawId: $drawId, 보상은 이미 수령했습니다")
+        }
+
+        // 3. 티켓의 순위 확인
+        val rankingResult = ticket.ranking?.let {
+            LottoDomain.RankingResult.of(it)
+        } ?: throw IllegalStateException("uid: $uid drawId: $drawId, 해당 티켓의 순위 정보가 없습니다.")
+
+        // 4. 순위에 따른 보상 처리
+        when (rankingResult.rewardType) {
+            LottoDomain.RewardType.POINT -> {
+                // 사용자의 포인트에 보상 추가
+                userPointRepository.addPoints(uid, rankingResult.rewardAmount)
+            }
+            LottoDomain.RewardType.LOTTERY_COIN -> {
+                // 사용자의 로또 코인에 보상 추가
+                userLotteryInfoRepository.incrementTotalCoin(uid, rankingResult.rewardAmount)
+            }
+            LottoDomain.RewardType.NONE -> {
+                // 1등, 2등의 경우 (제세공과금 등의 이유로 자동 지급되지 않음)
+                throw IllegalStateException("1등 또는 2등 보상은 자동으로 지급되지 않으며, 개별 연락이 필요합니다.")
+            }
+        }
+
+        // 5. 보상 수령 처리 (isReceiveReward 업데이트)
+        ticket.isReceiveReward = true
+        userLotteryDrawTicketRepository.save(ticket)
+    }
+
+
+    @Transactional(readOnly = true)
+    fun getLotteryRoundByRound(round: Int): LotteryRound? {
+        val currentLottery = lotteryRoundRepository.findByRound(round = round)
+
+        return currentLottery
+    }
+
+    @Transactional(readOnly = true)
+   fun getMyLotteriesByRound(uid: Long, round: Int): List<UserLotteryDrawTicket> {
         val userLotteryInfo = userLotteryDrawTicketRepository.findAllByUidAndRound(
             uid = uid,
             round = round
@@ -118,23 +237,21 @@ class LotteriesService(
         return userLotteryInfo
     }
 
-    @Transactional(readOnly = true)
-    fun getLotteryResultByRound(uid: Long, round: Int): LotteryResult? {
-        val currentLotteryResult = lotteryResultRepository.findByRoundAndUid(round = round, uid = uid)
 
-        return currentLotteryResult
-    }
+    private fun getPrevAndNextRounds(round: Int): Pair<Int?, Int?> {
+        val prevRound = if (lotteryRoundRepository.existsByRound(round - 1)) {
+            round - 1
+        } else {
+            null  // 이전 라운드가 없으면 null 반환
+        }
 
+        val nextRound = if (lotteryRoundRepository.existsByRound(round + 1)) {
+            round + 1
+        } else {
+            null  // 다음 라운드가 없으면 null 반환
+        }
 
-    @Transactional(readOnly = true)
-    fun getLotteryRoundByRound(round: Int): LotteryRound {
-        val currentLottery = lotteryRoundRepository.findByRound(round = round) ?: LotteryRound(
-            round = round,
-            numbers = emptyList(),
-            bonus = 0,
-        )
-
-        return currentLottery
+        return Pair(prevRound, nextRound)
     }
 
     companion object {

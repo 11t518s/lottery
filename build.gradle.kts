@@ -27,8 +27,13 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-batch")
 	implementation("org.flywaydb:flyway-core:9.16.0")
 	implementation("org.flywaydb:flyway-mysql:8.0.33")
+	implementation("com.squareup.retrofit2:retrofit:2.9.0")
+	implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
+	implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+	implementation("com.squareup.okhttp3:okhttp:4.9.0")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
 	runtimeOnly("mysql:mysql-connector-java:8.0.33")

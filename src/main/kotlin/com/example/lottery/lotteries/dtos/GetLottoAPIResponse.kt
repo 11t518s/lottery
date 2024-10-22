@@ -1,17 +1,18 @@
 package com.example.lottery.lotteries.dtos
 
-data class GetLottoAPIResult(
-    val drwNoDate: String,
-    val drwNo: Int,
-    val drwtNo1: Int,
-    val drwtNo2: Int,
-    val drwtNo3: Int,
-    val drwtNo4: Int,
-    val drwtNo5: Int,
-    val drwtNo6: Int,
-    val bnusNo: Int,
-    val totSellamnt: Long,
-    val firstAccumamnt: Long,
-    val firstWinamnt: Long,
-    val firstPrzwnerCo: Int,
+data class GetLottoAPIResponse(
+    val returnValue: String = "",  // "fail" 또는 "success"
+    val drwNoDate: String = "",
+    val drwNo: Int = -1,
+    val drwtNo1: Int = -1,
+    val drwtNo2: Int = -1,
+    val drwtNo3: Int = -1,
+    val drwtNo4: Int = -1,
+    val drwtNo5: Int = -1,
+    val drwtNo6: Int = -1,
+    val bnusNo: Int = -1,
+    val totSellamnt: Long = -1L,
+    val firstAccumamnt: Long = -1L,
+    val firstWinamnt: Long = -1L,
+    val firstPrzwnerCo: Int = -1,
 )

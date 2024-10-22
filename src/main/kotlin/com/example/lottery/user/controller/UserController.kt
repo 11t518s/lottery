@@ -17,5 +17,4 @@ class UserController(
 
         return ResponseEntity.ok(CreateUserResponse(data = createdUser))
     }
-
 }
