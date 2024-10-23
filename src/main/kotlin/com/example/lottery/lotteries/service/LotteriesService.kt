@@ -28,7 +28,7 @@ class LotteriesService(
 ) {
 
     @Transactional
-    fun getUserLotteryInfo(uid: Long): UserLotteryInfo {
+    fun getOrCreateUserLotteryInfo(uid: Long): UserLotteryInfo {
         val userLotteryInfo = userLotteryInfoRepository.findByIdOrNull(id = uid)
 
         if (userLotteryInfo != null) {
@@ -108,7 +108,7 @@ class LotteriesService(
 
     @Transactional
     fun saveUserLotteryDrawTicket(uid: Long): PostUserTicketDrawsResponse {
-        val userLotteryInfo = this.getUserLotteryInfo(uid)
+        val userLotteryInfo = this.getOrCreateUserLotteryInfo(uid)
 
         if (userLotteryInfo.totalCoin < TICKET_DRAW_COIN) {
             throw IllegalStateException("not enough coins")

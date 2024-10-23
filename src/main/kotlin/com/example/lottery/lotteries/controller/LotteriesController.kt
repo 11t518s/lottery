@@ -18,7 +18,7 @@ class LotteriesController(
     fun getLotteriesUserMe(
         @RequestHeader("uid") uid: Long
     ): ResponseEntity<GetLotteriesUseMeResponse> {
-        val userLotteryInfo = lotteriesService.getUserLotteryInfo(uid = uid)
+        val userLotteryInfo = lotteriesService.getOrCreateUserLotteryInfo(uid = uid)
 
         return ResponseEntity(GetLotteriesUseMeResponse(data = userLotteryInfo), HttpStatus.OK)
     }
