@@ -75,10 +75,7 @@ class LotteriesController(
                 redisLockService.releaseLock(lockKey)
             }
         } else {
-            ResponseEntity(PostUserTicketDrawsResponse(
-                numbers = emptyList(),
-                round = 0,
-            ), HttpStatus.CONFLICT)
+            ResponseEntity(HttpStatus.CONFLICT)
         }
     }
 

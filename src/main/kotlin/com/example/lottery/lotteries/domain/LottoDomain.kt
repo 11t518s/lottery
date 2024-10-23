@@ -49,13 +49,10 @@ object LottoDomain {
     }
 
     fun getCurrentLottoRound(): Int {
-        val firstLottoDate = LocalDate.of(2002, 12, 7)
-        val zoneId = ZoneId.of("Asia/Seoul")
-        val now = ZonedDateTime.ofInstant(Instant.now(), zoneId)
-        val todayLottoTime = ZonedDateTime.of(now.toLocalDate(), LocalTime.of(21, 0, 0), zoneId)
-        val effectiveNow = if (now.isBefore(todayLottoTime)) now.minusDays(1) else now
-        val weeksBetween = ChronoUnit.WEEKS.between(firstLottoDate, effectiveNow.toLocalDate())
-        return (weeksBetween + 1).toInt()
+        val start = ZonedDateTime.parse("2002-12-07T21:00:00+09:00")
+        val now = Instant.now().atZone(ZoneId.of("Asia/Seoul"))
+        val weeksBetween = ChronoUnit.WEEKS.between(start, now)
+        return (weeksBetween + 2).toInt()
     }
 
     fun calculateRanking(userNumbers: List<Int>, winningNumbers: List<Int>, bonusNumber: Int?): RankingResult {
