@@ -1,6 +1,6 @@
 package com.example.lottery.lotteries.config
 
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
+import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.lotteries.entities.LotteryRound
 import com.example.lottery.lotteries.outSideClient.LotteriesAPIClient
 import com.example.lottery.lotteries.repository.LotteryRoundRepository
@@ -62,7 +62,7 @@ class BatchConfig(
                         val lottoResult = responseBody.let {
                             LotteryRound(
                                 round = it.drwNo,
-                                numbers = listOf(it.drwtNo1, it.drwtNo2, it.drwtNo3, it.drwtNo4, it.drwtNo5, it.drwtNo6).sorted(),
+                                numbers = setOf(it.drwtNo1, it.drwtNo2, it.drwtNo3, it.drwtNo4, it.drwtNo5, it.drwtNo6).sorted().toSet(),
                                 bonus = it.bnusNo
                             )
                         }

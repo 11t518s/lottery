@@ -1,6 +1,6 @@
 package com.example.lottery.lotteries.controller
 
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
+import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.service.LotteriesService
 import com.example.lottery.redis.RedisLockService

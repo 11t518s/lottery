@@ -12,7 +12,7 @@ import javax.persistence.Table
 @Table(name = "lottery_round")
 @TypeDef(name = "json", typeClass = JsonStringType::class)
 class LotteryRound(
-    numbers: List<Int> = listOf(),
+    numbers: Set<Int> = emptySet(),
     val round: Int,
     val bonus: Int,
 ) {
@@ -21,5 +21,9 @@ class LotteryRound(
 
     @Type(type = "json")
     @Column(columnDefinition = "text", name = "numbers")
-    val numbers: List<Int> = numbers.sorted()
+    val numbers: Set<Int> = numbers.sorted().toSet()
+
+    init {
+        require(numbers.size == 6) { "Numbers must contain exactly 6 unique values." }
+    }
 }

@@ -1,14 +1,13 @@
 package com.example.lottery.lotteries.service
 
-import com.example.lottery.lotteries.domain.LottoDomain
 import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.entities.*
 import kotlin.random.Random
 
 import com.example.lottery.lotteries.repository.*
-import com.example.lottery.lotteries.domain.LottoDomain.generateLottoNumbers
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentKoreanDate
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
+import com.example.lottery.lotteries.domain.generateLottoNumbers
+import com.example.lottery.lotteries.domain.getCurrentKoreanDate
+import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.user.repository.UserPointRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -124,13 +123,13 @@ class LotteriesService(
         userLotteryDrawTicketRepository.save(
             UserLotteryDrawTicket(
                 round = currentRound,
-                numbers = randomLotteryNumbers.numbers,
+                numbers = randomLotteryNumbers,
                 uid = uid
             )
         )
 
         return PostUserTicketDrawsResponse(
-            numbers = randomLotteryNumbers.numbers,
+            numbers = randomLotteryNumbers,
             round = currentRound,
         )
     }
@@ -145,7 +144,7 @@ class LotteriesService(
             lotteryRound = LotteryRoundDto(
                 round = round,
                 winAnnounceAtMillis = Instant.now().toEpochMilli(),
-                numbers = currentLotteryRound?.let { NumbersDto(it.numbers) } ?: NumbersDto(emptyList()),
+                numbers = currentLotteryRound?.let { NumbersDto(it.numbers) } ?: NumbersDto(emptySet()),
                 bonus = currentLotteryRound?.bonus ?: 0
             ),
             userDraws = currentMyLotteries.map { ticket ->
@@ -180,7 +179,7 @@ class LotteriesService(
         val newResults = userTickets.filter { it.ranking == null }
             .mapNotNull { ticket ->
                 // 순위 계산
-                val rankingResult = LottoDomain.calculateRanking(
+                val rankingResult = UserLotteryDrawTicket.RankingResult.calculateRanking(
                     userNumbers = ticket.numbers,
                     winningNumbers = lotteryRound.numbers,
                     bonusNumber = lotteryRound.bonus
@@ -188,7 +187,7 @@ class LotteriesService(
 
                 // 순위가 있다면 로또 티켓에 순위 정보 업데이트
                 if (rankingResult.isWin) {
-                    ticket.ranking = rankingResult.place
+                    ticket.ranking = rankingResult.ranking
                     ticket.isReceiveReward = false
                     ticket
                 } else {
@@ -219,20 +218,20 @@ class LotteriesService(
 
         // 3. 티켓의 순위 확인
         val rankingResult = ticket.ranking?.let {
-            LottoDomain.RankingResult.of(it)
+            UserLotteryDrawTicket.RankingResult.of(it)
         } ?: throw IllegalStateException("uid: $uid drawId: $drawId, 해당 티켓의 순위 정보가 없습니다.")
 
         // 4. 순위에 따른 보상 처리
         when (rankingResult.rewardType) {
-            LottoDomain.RewardType.POINT -> {
+            UserLotteryDrawTicket.RewardType.POINT -> {
                 // 사용자의 포인트에 보상 추가
                 userPointRepository.addPoints(uid, rankingResult.rewardAmount)
             }
-            LottoDomain.RewardType.LOTTERY_COIN -> {
+            UserLotteryDrawTicket.RewardType.LOTTERY_COIN -> {
                 // 사용자의 로또 코인에 보상 추가
                 userLotteryInfoRepository.incrementTotalCoin(uid, rankingResult.rewardAmount)
             }
-            LottoDomain.RewardType.NONE -> {
+            UserLotteryDrawTicket.RewardType.NONE -> {
                 // 1등, 2등의 경우 (제세공과금 등의 이유로 자동 지급되지 않음)
                 throw IllegalStateException("1등 또는 2등 보상은 자동으로 지급되지 않으며, 개별 연락이 필요합니다.")
             }

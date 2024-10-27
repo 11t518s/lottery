@@ -9,7 +9,7 @@ data class LotteriesMission(
     val name: String,
     val maxCoinAmount: Int,
     val dailyRepeatableCount: Int,
-    val type: LotteryMission.Type?,
+    val type: LotteryMission.Type,
     val enabled: Boolean,
     val createdAt: Instant,
     val remainCount: Int

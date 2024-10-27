@@ -15,7 +15,7 @@ data class LotteryRoundDto(
 )
 
 data class NumbersDto(
-    val numbers: List<Int>
+    val numbers: Set<Int>
 )
 
 data class UserDrawDto(
