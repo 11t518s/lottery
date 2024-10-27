@@ -43,6 +43,7 @@ class LotteriesController(
         return if (lockAcquired) {
             try {
                 val result = lotteriesService.rewardUserForMission(missionId = missionId, uid = uid)
+                redisLockService.releaseLock(lockKey)
 
                 ResponseEntity(PostMissionCompleteResponse(
                     isSuccess = true,
@@ -52,10 +53,7 @@ class LotteriesController(
                 redisLockService.releaseLock(lockKey)
             }
         } else {
-            ResponseEntity(PostMissionCompleteResponse(
-                isSuccess = false,
-                rewardAmount = 0
-            ), HttpStatus.CONFLICT)
+            ResponseEntity(HttpStatus.CONFLICT)
         }
     }
 
@@ -69,6 +67,7 @@ class LotteriesController(
         return if (lockAcquired) {
             try {
                 val result = lotteriesService.saveUserLotteryDrawTicket(uid)
+                redisLockService.releaseLock(lockKey)
 
                 ResponseEntity(result, HttpStatus.OK)
             } finally {
@@ -123,15 +122,15 @@ class LotteriesController(
         val lockKey = "/${lotteryRound}/users/me/draws/${drawId}/reward:${uid}"
         val lockAcquired = redisLockService.tryLock(lockKey, 10)
 
-        return if (lockAcquired) {
+        if (lockAcquired) {
             lotteriesService.confirmLotteryResult(
                 round = lotteryRound,
                 drawId = drawId,
                 uid = uid
             )
-            return ResponseEntity(HttpStatus.OK)
         } else {
-            ResponseEntity(HttpStatus.CONFLICT)
+            return ResponseEntity(HttpStatus.CONFLICT)
         }
+        return ResponseEntity(HttpStatus.OK)
     }
 }
