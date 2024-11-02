@@ -1,5 +1,6 @@
 package com.example.lottery.lotteries.service
 
+import com.example.lottery.lotteries.domain.LotteryNumbers
 import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.entities.*
 import kotlin.random.Random
@@ -113,7 +114,7 @@ class LotteriesService(
             throw IllegalStateException("not enough coins")
         }
 
-        val randomLotteryNumbers = generateLottoNumbers()
+        val randomLotteryNumbers = LotteryNumbers(generateLottoNumbers())
         val currentRound = getCurrentLottoRound()
 
         userLotteryInfoRepository.decrementTotalCoin(

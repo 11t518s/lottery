@@ -1,5 +1,6 @@
 package com.example.lottery.lotteries.entities
 
+import com.example.lottery.lotteries.domain.LotteryNumbers
 import com.vladmihalcea.hibernate.type.json.JsonStringType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.Type
@@ -12,28 +13,24 @@ import javax.persistence.*
 @Table(name = "user_lottery_draw_ticket")
 @TypeDef(name = "json", typeClass = JsonStringType::class)
 class UserLotteryDrawTicket(
-    numbers: Set<Int>,
+    numbers: LotteryNumbers,
     val round: Int,
     val uid: Long,
 
-) {
+    ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
 
     @Type(type = "json")
     @Column(columnDefinition = "text", name = "numbers")
-    val numbers: Set<Int> = numbers.sorted().toSet()
+    val numbers: Set<Int> = numbers.numbers
 
     @CreationTimestamp
     val createdAt: Instant = Instant.now()
 
     var ranking: Int? = null
     var isReceiveReward: Boolean = false
-
-    init {
-        require(numbers.size == 6) { "Numbers must contain exactly 6 unique values." }
-    }
 
     enum class RewardType {
         NONE,

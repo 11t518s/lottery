@@ -1,5 +1,6 @@
 package com.example.lottery.lotteries.config
 
+import com.example.lottery.lotteries.domain.LotteryNumbers
 import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.lotteries.entities.LotteryRound
 import com.example.lottery.lotteries.outSideClient.LotteriesAPIClient
@@ -45,7 +46,7 @@ class BatchConfig(
             val existingLottoRound = lotteryRoundRepository.findById(currentRound)
 
             if (existingLottoRound.isPresent) {
-                println("Lotto round ${currentRound} already exists, stopping batch.")
+//                println("Lotto round ${currentRound} already exists, stopping batch.")
                 return@Tasklet RepeatStatus.FINISHED
             }
 
@@ -56,24 +57,24 @@ class BatchConfig(
 
                 when (responseBody?.returnValue) {
                     "fail" -> {
-                        println("API returned failure")
+//                        println("API returned failure")
                     }
                     "success" -> {
                         val lottoResult = responseBody.let {
                             LotteryRound(
                                 round = it.drwNo,
-                                numbers = setOf(it.drwtNo1, it.drwtNo2, it.drwtNo3, it.drwtNo4, it.drwtNo5, it.drwtNo6).sorted().toSet(),
+                                numbers = LotteryNumbers(setOf(it.drwtNo1, it.drwtNo2, it.drwtNo3, it.drwtNo4, it.drwtNo5, it.drwtNo6).sorted().toSet()),
                                 bonus = it.bnusNo
                             )
                         }
 
                         lottoResult.let {
                             lotteryRoundRepository.save(it)
-                            println("Lotto round 1141 saved successfully.")
+//                            println("Lotto round 1141 saved successfully.")
                         }
                     }
                     else -> {
-                        println("Unexpected returnValue: ${responseBody?.returnValue}")
+//                        println("Unexpected returnValue: ${responseBody?.returnValue}")
                     }
                 }
             }

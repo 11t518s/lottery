@@ -17,6 +17,6 @@ class LotteryBatchScheduler(
     @Scheduled(cron = "\${batch-cron.lotteryJob.cron}", zone = "Asia/Seoul")
     fun runLotteryJob() {
         lotteryJobLauncher.runLotteryJob()
-        println("Running lottery job with cron: $cronExpression")
+//        println("Running lottery job with cron: $cronExpression")
     }
 }
