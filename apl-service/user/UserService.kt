@@ -1,4 +1,4 @@
-package com.example.lottery.user.service
+package com.example.lottery.user
 
 import com.example.lottery.user.entities.User
 import com.example.lottery.user.repository.UserRepository

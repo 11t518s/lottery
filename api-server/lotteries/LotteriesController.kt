@@ -1,4 +1,4 @@
-package com.example.lottery.lotteries.controller
+package com.example.lottery.lotteries
 
 import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.lotteries.dtos.*

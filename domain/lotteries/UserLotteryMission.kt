@@ -1,6 +1,5 @@
 package com.example.lottery.lotteries.entities
 
-import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.persistence.*

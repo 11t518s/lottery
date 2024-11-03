@@ -1,4 +1,4 @@
-package com.example.lottery.lotteries.service
+package com.example.lottery.lotteries
 
 import com.example.lottery.lotteries.domain.LotteryNumbers
 import com.example.lottery.lotteries.dtos.*
