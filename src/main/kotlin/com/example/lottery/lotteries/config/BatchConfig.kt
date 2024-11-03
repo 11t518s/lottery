@@ -1,6 +1,7 @@
 package com.example.lottery.lotteries.config
 
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
+import com.example.lottery.lotteries.domain.LotteryNumbers
+import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.lotteries.entities.LotteryRound
 import com.example.lottery.lotteries.outSideClient.LotteriesAPIClient
 import com.example.lottery.lotteries.repository.LotteryRoundRepository
@@ -42,15 +43,13 @@ class BatchConfig(
     fun lotteryTasklet(): Tasklet {
         return Tasklet { contribution, chunkContext ->
             val currentRound = getCurrentLottoRound()
-            // 1. Repository에서 1141번 회차 데이터가 이미 있는지 확인
             val existingLottoRound = lotteryRoundRepository.findById(currentRound)
 
             if (existingLottoRound.isPresent) {
-                println("Lotto round ${currentRound} already exists, stopping batch.")
-                return@Tasklet RepeatStatus.FINISHED  // 이미 데이터가 있으므로 배치 종료
+//                println("Lotto round ${currentRound} already exists, stopping batch.")
+                return@Tasklet RepeatStatus.FINISHED
             }
 
-            // 2. 데이터가 없을 경우, API 호출
             val response = lotteriesAPIClient.getLottoNumber(currentRound).execute()
 
             if (response.isSuccessful) {
@@ -58,25 +57,24 @@ class BatchConfig(
 
                 when (responseBody?.returnValue) {
                     "fail" -> {
-                        println("API returned failure")
+//                        println("API returned failure")
                     }
                     "success" -> {
                         val lottoResult = responseBody.let {
                             LotteryRound(
                                 round = it.drwNo,
-                                numbers = listOf(it.drwtNo1, it.drwtNo2, it.drwtNo3, it.drwtNo4, it.drwtNo5, it.drwtNo6).sorted(),
+                                numbers = LotteryNumbers(setOf(it.drwtNo1, it.drwtNo2, it.drwtNo3, it.drwtNo4, it.drwtNo5, it.drwtNo6).sorted().toSet()),
                                 bonus = it.bnusNo
                             )
                         }
 
-                        // 3. 새 데이터를 저장
                         lottoResult.let {
                             lotteryRoundRepository.save(it)
-                            println("Lotto round 1141 saved successfully.")
+//                            println("Lotto round 1141 saved successfully.")
                         }
                     }
                     else -> {
-                        println("Unexpected returnValue: ${responseBody?.returnValue}")
+//                        println("Unexpected returnValue: ${responseBody?.returnValue}")
                     }
                 }
             }

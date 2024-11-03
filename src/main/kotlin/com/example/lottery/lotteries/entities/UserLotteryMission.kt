@@ -16,5 +16,5 @@ class UserLotteryMission(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
 
-    val createdAt: LocalDate = LocalDate.now(ZoneId.of("Asia/Seoul"))  // 한국 표준시에 맞춰 생성
+    val createdAt: LocalDate = LocalDate.now(ZoneId.of("Asia/Seoul"))
 }

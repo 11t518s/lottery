@@ -50,11 +50,6 @@ CREATE TABLE user_lottery_draw_ticket
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE INDEX idx_user_lottery_draw_ticket_numbers ON user_lottery_draw_ticket (numbers(255)); -- TEXT 필드는 길이를 지정해야 함
-CREATE INDEX idx_user_lottery_draw_ticket_bonus_number ON user_lottery_draw_ticket (bonus_number);
-CREATE INDEX idx_user_lottery_draw_ticket_round ON user_lottery_draw_ticket (round);
-CREATE INDEX idx_user_lottery_draw_ticket_uid ON user_lottery_draw_ticket (uid);
-
 CREATE TABLE user_lottery_info
 (
     uid         BIGINT NOT NULL,
@@ -71,8 +66,3 @@ CREATE TABLE user_lottery_mission
     uid        BIGINT NOT NULL,
     CONSTRAINT pk_user_lottery_mission PRIMARY KEY (id)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-
-CREATE INDEX idx_user_lottery_mission_uid ON user_lottery_mission (uid);
-CREATE INDEX idx_user_lottery_mission_created_at ON user_lottery_mission (created_at);
-CREATE INDEX idx_user_lottery_mission_mission_id ON user_lottery_mission (mission_id);

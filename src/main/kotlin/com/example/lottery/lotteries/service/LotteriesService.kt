@@ -1,14 +1,14 @@
 package com.example.lottery.lotteries.service
 
-import com.example.lottery.lotteries.domain.LottoDomain
+import com.example.lottery.lotteries.domain.LotteryNumbers
 import com.example.lottery.lotteries.dtos.*
 import com.example.lottery.lotteries.entities.*
 import kotlin.random.Random
 
 import com.example.lottery.lotteries.repository.*
-import com.example.lottery.lotteries.domain.LottoDomain.generateLottoNumbers
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentKoreanDate
-import com.example.lottery.lotteries.domain.LottoDomain.getCurrentLottoRound
+import com.example.lottery.lotteries.domain.generateLottoNumbers
+import com.example.lottery.lotteries.domain.getCurrentKoreanDate
+import com.example.lottery.lotteries.domain.getCurrentLottoRound
 import com.example.lottery.user.repository.UserPointRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -28,7 +28,7 @@ class LotteriesService(
 ) {
 
     @Transactional
-    fun getUserLotteryInfo(uid: Long): UserLotteryInfo {
+    fun getOrCreateUserLotteryInfo(uid: Long): UserLotteryInfo {
         val userLotteryInfo = userLotteryInfoRepository.findByIdOrNull(id = uid)
 
         if (userLotteryInfo != null) {
@@ -39,6 +39,31 @@ class LotteriesService(
             )
             return newUser
         }
+    }
+
+    @Transactional(readOnly = true)
+    fun getUserLotteryMissions(uid: Long?): List<LotteriesMission> {
+        val lotteriesMissions = getLotteriesMissions()
+        val userLotteriesClearMissions = getUserClearedMissions(uid = uid)
+
+        val userLotteriesMissions = lotteriesMissions.map { mission ->
+            val clearedCount = userLotteriesClearMissions.count { it.missionId == mission.id }
+            val remainCount = (mission.dailyRepeatableCount - clearedCount).coerceAtLeast(0)
+            val isEnabled = mission.enabled && remainCount > 0
+
+            LotteriesMission(
+                id = mission.id,
+                name = mission.name,
+                maxCoinAmount = mission.maxCoinAmount,
+                dailyRepeatableCount = mission.dailyRepeatableCount,
+                type = mission.type,
+                enabled = isEnabled,
+                createdAt = mission.createdAt,
+                remainCount = remainCount
+            )
+        }
+
+        return userLotteriesMissions
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +81,7 @@ class LotteriesService(
     }
 
     @Transactional
-    fun saveUserMission(missionId: Long, uid: Long): UserLotteryMission {
+    fun rewardUserForMission(missionId: Long, uid: Long): UserLotteryMission {
         val targetMission = lotteriesMissionRepository.findByIdOrNull(missionId) ?: throw NoSuchElementException("Mission with ID $missionId not found")
         val userLotteryMissions = userLotteryMissionRepository.findAllByUidAndCreatedAt(uid = uid, createdAt = getCurrentKoreanDate()) ?: emptyList()
 
@@ -83,13 +108,13 @@ class LotteriesService(
 
     @Transactional
     fun saveUserLotteryDrawTicket(uid: Long): PostUserTicketDrawsResponse {
-        val userLotteryInfo = this.getUserLotteryInfo(uid)
+        val userLotteryInfo = this.getOrCreateUserLotteryInfo(uid)
 
         if (userLotteryInfo.totalCoin < TICKET_DRAW_COIN) {
             throw IllegalStateException("not enough coins")
         }
 
-        val randomLotteryNumbers = generateLottoNumbers()
+        val randomLotteryNumbers = LotteryNumbers(generateLottoNumbers())
         val currentRound = getCurrentLottoRound()
 
         userLotteryInfoRepository.decrementTotalCoin(
@@ -99,13 +124,13 @@ class LotteriesService(
         userLotteryDrawTicketRepository.save(
             UserLotteryDrawTicket(
                 round = currentRound,
-                numbers = randomLotteryNumbers.numbers,
+                numbers = randomLotteryNumbers,
                 uid = uid
             )
         )
 
         return PostUserTicketDrawsResponse(
-            numbers = randomLotteryNumbers.numbers,
+            numbers = randomLotteryNumbers,
             round = currentRound,
         )
     }
@@ -120,21 +145,20 @@ class LotteriesService(
             lotteryRound = LotteryRoundDto(
                 round = round,
                 winAnnounceAtMillis = Instant.now().toEpochMilli(),
-                numbers = currentLotteryRound?.let { NumbersDto(it.numbers) } ?: NumbersDto(emptyList()),
+                numbers = currentLotteryRound?.let { NumbersDto(it.numbers) } ?: NumbersDto(emptySet()),
                 bonus = currentLotteryRound?.bonus ?: 0
             ),
             userDraws = currentMyLotteries.map { ticket ->
-                // 티켓에 결과 정보가 이미 포함되어 있으므로 별도로 로또 결과를 가져올 필요가 없음
                 val isLotterySuccess = ticket.ranking != null
 
                 UserDrawDto(
                     id = ticket.id,
                     uid = ticket.uid,
                     numbers = NumbersDto(ticket.numbers),
-                    canReward = ticket.isReceiveReward,  // 보상 수령 가능 여부
+                    canReward = ticket.isReceiveReward,
                     drawnAtMillis = ticket.createdAt.toEpochMilli(),
-                    isWin = isLotterySuccess,  // 당첨 여부
-                    winPlace = ticket.ranking  // 당첨 순위
+                    isWin = isLotterySuccess,
+                    winPlace = ticket.ranking
                 )
             },
             prevRound = prevRound,
@@ -156,7 +180,7 @@ class LotteriesService(
         val newResults = userTickets.filter { it.ranking == null }
             .mapNotNull { ticket ->
                 // 순위 계산
-                val rankingResult = LottoDomain.calculateRanking(
+                val rankingResult = UserLotteryDrawTicket.RankingResult.calculateRanking(
                     userNumbers = ticket.numbers,
                     winningNumbers = lotteryRound.numbers,
                     bonusNumber = lotteryRound.bonus
@@ -164,7 +188,7 @@ class LotteriesService(
 
                 // 순위가 있다면 로또 티켓에 순위 정보 업데이트
                 if (rankingResult.isWin) {
-                    ticket.ranking = rankingResult.place
+                    ticket.ranking = rankingResult.ranking
                     ticket.isReceiveReward = false
                     ticket
                 } else {
@@ -195,20 +219,20 @@ class LotteriesService(
 
         // 3. 티켓의 순위 확인
         val rankingResult = ticket.ranking?.let {
-            LottoDomain.RankingResult.of(it)
+            UserLotteryDrawTicket.RankingResult.of(it)
         } ?: throw IllegalStateException("uid: $uid drawId: $drawId, 해당 티켓의 순위 정보가 없습니다.")
 
         // 4. 순위에 따른 보상 처리
         when (rankingResult.rewardType) {
-            LottoDomain.RewardType.POINT -> {
+            UserLotteryDrawTicket.RewardType.POINT -> {
                 // 사용자의 포인트에 보상 추가
                 userPointRepository.addPoints(uid, rankingResult.rewardAmount)
             }
-            LottoDomain.RewardType.LOTTERY_COIN -> {
+            UserLotteryDrawTicket.RewardType.LOTTERY_COIN -> {
                 // 사용자의 로또 코인에 보상 추가
                 userLotteryInfoRepository.incrementTotalCoin(uid, rankingResult.rewardAmount)
             }
-            LottoDomain.RewardType.NONE -> {
+            UserLotteryDrawTicket.RewardType.NONE -> {
                 // 1등, 2등의 경우 (제세공과금 등의 이유로 자동 지급되지 않음)
                 throw IllegalStateException("1등 또는 2등 보상은 자동으로 지급되지 않으며, 개별 연락이 필요합니다.")
             }
@@ -242,13 +266,13 @@ class LotteriesService(
         val prevRound = if (lotteryRoundRepository.existsByRound(round - 1)) {
             round - 1
         } else {
-            null  // 이전 라운드가 없으면 null 반환
+            null
         }
 
         val nextRound = if (lotteryRoundRepository.existsByRound(round + 1)) {
             round + 1
         } else {
-            null  // 다음 라운드가 없으면 null 반환
+            null
         }
 
         return Pair(prevRound, nextRound)

@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/user") // 기본 경로 설정
+@RequestMapping("/user")
 class UserController(
     private val userService: UserService
 ) {

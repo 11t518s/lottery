@@ -12,7 +12,7 @@ class LotteryMission(
     val dailyRepeatableCount: Int = 0,
 
     @Enumerated(EnumType.STRING)
-    val type: Type? = null,
+    val type: Type,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +21,7 @@ class LotteryMission(
     var enabled: Boolean = false
 
     @CreationTimestamp
-    var createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now()
 
     enum class Type {
         ATTENDANCE_CHECK, // 출석 체크
