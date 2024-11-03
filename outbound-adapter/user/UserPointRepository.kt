@@ -1,4 +1,4 @@
-package com.example.lottery.user.repository
+package com.example.lottery.user
 
 import org.springframework.stereotype.Repository
 

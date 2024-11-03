@@ -1,4 +1,4 @@
-package com.example.lottery.user.controller
+package com.example.lottery.user
 
 import com.example.lottery.user.dtos.CreateUserRequest
 import com.example.lottery.user.dtos.CreateUserResponse

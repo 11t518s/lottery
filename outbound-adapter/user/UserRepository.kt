@@ -1,4 +1,4 @@
-package com.example.lottery.user.repository
+package com.example.lottery.user
 
 import com.example.lottery.user.entities.User
 import org.springframework.data.jpa.repository.JpaRepository
